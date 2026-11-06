@@ -1,0 +1,26 @@
+services:
+  model-api:            # Task 1
+    build: { context: ., dockerfile: model-api/Dockerfile }
+    ports: ["8000:8000"]
+
+  estimator-api:        # Task 2, App 1 backend (Python)
+    build: ./portal/estimator-api
+    environment: { MODEL_API_URL: http://model-api:8000 }
+    volumes: ["estimator-data:/data"]
+    depends_on: [model-api]
+    ports: ["8001:8001"]
+
+  market-api:           # Task 2, App 2 backend (Java)
+    build: ./portal/market-api
+    environment: { MODEL_API_URL: http://model-api:8000, DATASET_PATH: /data/housing.csv }
+    volumes: ["./data:/data:ro"]
+    depends_on: [model-api]
+    ports: ["8002:8002"]
+
+  web:                  # Task 2 frontend (Next.js)
+    build: ./portal/web
+    depends_on: [estimator-api, market-api]
+    ports: ["3000:3000"]
+
+volumes:
+  estimator-data:
